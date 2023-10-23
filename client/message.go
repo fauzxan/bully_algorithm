@@ -7,6 +7,7 @@ type Message struct{
 	Replica []int
 	From int
 	Clientlist map[int]string
+	IpMapping string
 }
 
 func (message *Message) Printmsg(){

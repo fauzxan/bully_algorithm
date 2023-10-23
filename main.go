@@ -8,10 +8,12 @@ import (
 	"net/rpc"
 	"os"
 	"strconv"
-	// "strings"
 	"sync"
 	"time"
+	"github.com/fatih/color"
 )
+
+var menu = color.New(color.FgCyan).Add(color.BgBlack)
 
 func main() {
 	me := client.Client{
@@ -72,12 +74,31 @@ func main() {
 
 	go me.Sendcandidacy()
 
-	random := ""
+
+	var input string
 	for {
-		fmt.Printf("Press enter for %d to communicate with coordinator.\n", me.Coordinator_id)
-		fmt.Scanf("%s", &random)
-		go me.Coordinatorsync()
-		time.Sleep(1 * time.Second)
-		fmt.Println("")
+		// menu.Printf("Press any button for %d to communicate with coordinator.\n", me.Coordinator_id)
+		menu.Println("Press 1 to enter something into my replica")
+		menu.Println("Press 2 to view my replica")
+		menu.Println("Press 3 to view my clientlist")
+		fmt.Scanln(&input)
+		if input == "1"{
+			var repinput string
+			menu.Println("Enter one number into the replica")
+			fmt.Scanln(&repinput)
+			num, err := strconv.Atoi(repinput)
+			if err != nil{
+				fmt.Println("Enter a number lah")
+			}
+			go me.EnterReplica(num)
+		}else if (input == "2"){
+			menu.Println("Replica", me.Replica)
+		}else if (input == "3"){
+			me.Printclients()
+		}
+		
+		
+		time.Sleep(200)
+		menu.Println("")
 	}
 }
