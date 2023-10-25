@@ -19,7 +19,6 @@ type Client struct{
 }
 
 // Flag variables:
-var Election_invoked = false
 var Higherid = false
 
 // Message types
@@ -69,7 +68,7 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 		return
 	}
 	for {
-		time.Sleep(10*time.Second)
+		time.Sleep(2*time.Second)
 		if (client.Id == client.Coordinator_id){return} // Don't ping if I am the coordinator
 		coordinator_ip := client.Clientlist[client.Coordinator_id]
 		reply := Message{}
@@ -95,16 +94,17 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 			return
 		}
 		if (reply.Type == ACK){
-			fmt.Println("Pinged the coordinator. It's alive")
+			// fmt.Println("Pinged the coordinator", client.Coordinator_id,"It's alive")
+			fmt.Println("")
 		}
 	}
 }
 
 func (client *Client) InvokeReplicaSync(){
 	for {
-		time.Sleep(10*time.Second)
+		time.Sleep(2*time.Second)
 		if client.Id != client.Coordinator_id {return} // Don't start syncing if I am not the coordinator
-		fmt.Println("Starting replica sync")
+		fmt.Println("\nStarting replica sync")
 		for id := range client.Clientlist{
 			if (id == client.Id){continue}
 			send := Message{
@@ -193,18 +193,17 @@ func (client *Client) Sendcandidacy(){ // invokeelection()
 	if (!Higherid){
 		// function to make yourself coordinator
 		client.Coordinator_id = client.Id
-		client.Announcevictory()
+		go client.Announcevictory()
 	}else{
 		go client.Coordinatorping()
 	}
-	Election_invoked = true
 }
 
 func (client *Client) Announcevictory(){ // Make yourself coordinator
 
 	send := Message{Type: VICTORY, From: client.Id, Clientlist: client.Clientlist}
 	reply := Message{}
-	fmt.Println("No higher id node found. I am announcing victory!")
+	fmt.Println("No higher id node found. I am announcing victory! Current clientlist:", client.Clientlist)
 	client.Printclients()
 	for id, ip := range client.Clientlist{
 		if (id == client.Id){continue}
@@ -220,12 +219,13 @@ func (client *Client) Announcevictory(){ // Make yourself coordinator
 			fmt.Println(err)
 			continue
 		}
+		fmt.Println("Victory message sent to", id, "at", ip)
 		if (reply.Type == "ack" && id > client.Id){
 			// if you are announcing vicotry and you receive an ack message from a higher id, then just stop announcing
 			fmt.Println("Message sent to", id, "successfully")
 			fmt.Println("Client", id, "is awake")
 			break
-		}else if(reply.Type == "ack"){
+		}else if(reply.Type == ACK){
 			fmt.Println("Client", id, "acknowledged me as coordinator")
 		}
 	}
@@ -266,8 +266,6 @@ func (client *Client) Check(n int) bool{
 		true means that id is not taken | id is not there in the clientlist
 		false means that id is taken | id is there in the clientlist
 	*/
-	// client.Lock.Lock()
-	// defer client.Lock.Unlock()
 	for id := range client.Clientlist {
 		if (n == id){
 			return false
