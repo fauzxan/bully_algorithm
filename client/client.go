@@ -68,7 +68,7 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 		return
 	}
 	for {
-		time.Sleep(2*time.Second)
+		time.Sleep(5*time.Second)
 		if (client.Id == client.Coordinator_id){return} // Don't ping if I am the coordinator
 		coordinator_ip := client.Clientlist[client.Coordinator_id]
 		reply := Message{}
@@ -102,7 +102,7 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 
 func (client *Client) InvokeReplicaSync(){
 	for {
-		time.Sleep(2*time.Second)
+		time.Sleep(5*time.Second)
 		if client.Id != client.Coordinator_id {return} // Don't start syncing if I am not the coordinator
 		fmt.Println("\nStarting replica sync")
 		for id := range client.Clientlist{
@@ -163,7 +163,7 @@ func (client *Client) InvokeReplicaSync(){
 
 
 func (client *Client) Sendcandidacy(){ // invokeelection()
-	fmt.Println("Discovery phase beginning...")
+	fmt.Println("Discovery phase beginning at", time.Now().Local().UTC())
 	var Higherid = false
 	for id, ip := range client.Clientlist{
 		reply := Message{}
@@ -200,10 +200,9 @@ func (client *Client) Sendcandidacy(){ // invokeelection()
 }
 
 func (client *Client) Announcevictory(){ // Make yourself coordinator
-
 	send := Message{Type: VICTORY, From: client.Id, Clientlist: client.Clientlist}
 	reply := Message{}
-	fmt.Println("No higher id node found. I am announcing victory! Current clientlist:", client.Clientlist)
+	fmt.Println("No higher id node found. I am announcing victory! Current clientlist (you may fail clients now):", client.Clientlist)
 	client.Printclients()
 	for id, ip := range client.Clientlist{
 		if (id == client.Id){continue}
@@ -228,6 +227,7 @@ func (client *Client) Announcevictory(){ // Make yourself coordinator
 		}else if(reply.Type == ACK){
 			fmt.Println("Client", id, "acknowledged me as coordinator")
 		}
+		// time.Sleep(2 * time.Second) // uncomment this line to introduce delay, so you can fail some nodes in the meantime
 	}
 	go client.InvokeReplicaSync()
 }
