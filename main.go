@@ -17,7 +17,7 @@ var menu = color.New(color.FgCyan).Add(color.BgBlack)
 
 func main() {
 	me := client.Client{Lock: sync.Mutex{}}
-	
+
 	data, err := os.ReadFile("clientlist.json")
 	if err != nil {
 		fmt.Println("Error reading file clientlist.json")
@@ -68,7 +68,6 @@ func main() {
 	go rpc.Accept(inbound)
 
 	go me.Sendcandidacy()
-
 
 	var input string
 	for {

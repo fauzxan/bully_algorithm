@@ -29,6 +29,9 @@ var ACK = "ack"
 var VICTORY = "victory"
 var PING = "ping"
 
+// Timer variable for timing elections:
+var Timer = time.Now()
+
 func (client *Client) HandleCommunication(message *Message, reply *Message) error{ // Handle communication
 	client.Lock.Lock()
 	defer client.Lock.Unlock()
@@ -51,6 +54,10 @@ func (client *Client) HandleCommunication(message *Message, reply *Message) erro
 		fmt.Println(client.Coordinator_id, "is now my coordinator")
 		reply.Type = ACK
 		go client.Coordinatorping()
+		// Election ended here, so I must print out time elapsed till now
+		fmt.Println("********************************")
+		fmt.Println("Time elapsed since election start:", time.Since(Timer))
+		fmt.Println("********************************")
 	}else if(message.Type == CORRECTION){
 		fmt.Println("\nReceived a correction message from", message.From, client.Replica)
 		client.Replica = message.Replica
@@ -68,7 +75,7 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 		return
 	}
 	for {
-		time.Sleep(5*time.Second)
+		time.Sleep(1*time.Second)
 		if (client.Id == client.Coordinator_id){return} // Don't ping if I am the coordinator
 		coordinator_ip := client.Clientlist[client.Coordinator_id]
 		reply := Message{}
@@ -102,7 +109,7 @@ func (client *Client) Coordinatorping(){ // communicatetocoordinator
 
 func (client *Client) InvokeReplicaSync(){
 	for {
-		time.Sleep(5*time.Second)
+		time.Sleep(1*time.Second)
 		if client.Id != client.Coordinator_id {return} // Don't start syncing if I am not the coordinator
 		fmt.Println("\nStarting replica sync")
 		for id := range client.Clientlist{
@@ -163,7 +170,8 @@ func (client *Client) InvokeReplicaSync(){
 
 
 func (client *Client) Sendcandidacy(){ // invokeelection()
-	fmt.Println("Discovery phase beginning at", time.Now().Local().UTC())
+	Timer = time.Now() //  This is when I started the election, elapsed time is marked throughout the code
+	fmt.Println("Discovery phase beginning at", Timer.Local().UTC())
 	var Higherid = false
 	for id, ip := range client.Clientlist{
 		reply := Message{}
@@ -229,6 +237,10 @@ func (client *Client) Announcevictory(){ // Make yourself coordinator
 		}
 		// time.Sleep(2 * time.Second) // uncomment this line to introduce delay, so you can fail some nodes in the meantime
 	}
+	// This is where we calculate the elapsed time in case the client wins the election.
+	fmt.Println("********************************")
+	fmt.Println("Time elapsed since election start:", time.Since(Timer))
+	fmt.Println("********************************")
 	go client.InvokeReplicaSync()
 }
 
